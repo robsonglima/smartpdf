@@ -1,0 +1,11 @@
+# Ambiente Virtual
+.venv/
+
+# Arquivos temporários e cache
+__pycache__/
+.idx/
+assets/temp_*.pdf
+assets/temp_*.xlsx
+
+# Streamlit Config
+~/.streamlit/
