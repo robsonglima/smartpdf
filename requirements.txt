@@ -1,4 +1,4 @@
-echo "streamlit
+streamlit
 pymupdf
 pandas
-openpyxl" > requirements.txt
+openpyxl
