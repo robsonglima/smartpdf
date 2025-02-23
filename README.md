@@ -1,7 +1,17 @@
-# Flask Web App Starter
+SmartPDF - PDF to Excel Converter 📄➡️📊
+SmartPDF é uma aplicação baseada em Streamlit que permite aos usuários fazer upload de arquivos PDF, extrair dados estruturados e convertê-los em planilhas Excel (.xlsx). 🚀
 
-A Flask starter template as per [these docs](https://flask.palletsprojects.com/en/3.0.x/quickstart/#a-minimal-application).
+✨ Recursos
+✅ Upload de arquivos PDF
+✅ Extração de texto usando PyMuPDF (fitz)
+✅ Conversão para DataFrame (pandas)
+✅ Exportação para Excel (.xlsx)
+✅ Interface amigável via Streamlit
+✅ Deploy no Streamlit Cloud
 
-## Getting Started
-
-Previews should run automatically when starting a workspace.
+🛠 Tecnologias Utilizadas
+Python 3.9+
+Streamlit (Interface Web)
+PyMuPDF (fitz) (Extração de Texto do PDF)
+pandas (Manipulação de Dados)
+openpyxl (Exportação para Excel)
