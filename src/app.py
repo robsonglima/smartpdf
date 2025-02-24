@@ -1,27 +1,60 @@
 import streamlit as st
+import fitz  # PyMuPDF
+import pandas as pd
 import os
-from backend.process_pdf import convert_pdf_to_excel
+import sys
 
+# Adicionar o backend ao caminho do sistema
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# Configuração do Streamlit
+st.set_page_config(page_title="SmartPDF - PDF to Excel", layout="centered")
+
+# Título do App
 st.title("📄 SmartPDF - Convert PDF to Excel")
 
-uploaded_file = st.file_uploader("Faça upload de um PDF", type=["pdf"])
+# Upload do arquivo PDF
+uploaded_file = st.file_uploader("Upload um arquivo PDF", type=["pdf"])
 
+# Função para extrair texto do PDF
+def extract_text_from_pdf(pdf_path):
+    doc = fitz.open(pdf_path)
+    text = "\n".join([page.get_text("text") for page in doc])
+    return text
+
+# Função para salvar DataFrame como Excel
+def save_to_excel(df, output_path):
+    df.to_excel(output_path, index=False)
+
+# Processo de conversão do PDF para Excel
 if uploaded_file:
-    # Salvar temporariamente o PDF
-    pdf_path = f"assets/{uploaded_file.name}"
-    with open(pdf_path, "wb") as f:
-        f.write(uploaded_file.getbuffer())
+    with st.spinner("Processando o PDF... ⏳"):
+        # Salvar arquivo temporário
+        temp_pdf_path = os.path.join("assets", uploaded_file.name)
+        with open(temp_pdf_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
 
-    st.write("📄 Arquivo carregado com sucesso! Processando...")
+        # Extrair texto
+        extracted_text = extract_text_from_pdf(temp_pdf_path)
 
-    # Converter PDF para Excel
-    try:
-        excel_path = pdf_path.replace(".pdf", ".xlsx")
-        convert_pdf_to_excel(pdf_path, excel_path)
-        
-        # Exibir botão de download
+        # Simulação da conversão em DataFrame (ajuste conforme necessário)
+        data = {"Linha": extracted_text.split("\n")}
+        df = pd.DataFrame(data)
+
+        # Salvar DataFrame no Excel
+        output_xlsx_path = os.path.join("assets", "converted.xlsx")
+        save_to_excel(df, output_xlsx_path)
+
         st.success("✅ Conversão concluída!")
-        st.download_button("📥 Baixar Excel", open(excel_path, "rb"), file_name="converted.xlsx")
 
-    except Exception as e:
-        st.error(f"Erro na conversão: {e}")
+        # Exibir DataFrame
+        st.write("📊 Dados extraídos:")
+        st.dataframe(df)
+
+        # Botão de Download do Excel
+        st.download_button(
+            label="📥 Baixar Excel",
+            data=open(output_xlsx_path, "rb"),
+            file_name="converted.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
