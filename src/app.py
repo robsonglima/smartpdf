@@ -2,15 +2,14 @@ import streamlit as st
 import fitz  # PyMuPDF
 import pandas as pd
 import os
-import sys
 
-# Adicionar o backend ao caminho do sistema
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Garantir que a pasta "assets/" existe
+ASSETS_DIR = "assets"
+os.makedirs(ASSETS_DIR, exist_ok=True)
 
 # Configuração do Streamlit
 st.set_page_config(page_title="SmartPDF - PDF to Excel", layout="centered")
 
-# Título do App
 st.title("📄 SmartPDF - Convert PDF to Excel")
 
 # Upload do arquivo PDF
@@ -29,20 +28,24 @@ def save_to_excel(df, output_path):
 # Processo de conversão do PDF para Excel
 if uploaded_file:
     with st.spinner("Processando o PDF... ⏳"):
-        # Salvar arquivo temporário
-        temp_pdf_path = os.path.join("assets", uploaded_file.name)
+        # Criar o caminho do arquivo dentro de "assets/"
+        temp_pdf_path = os.path.join(ASSETS_DIR, uploaded_file.name)
+
+        # Salvar o arquivo na pasta correta
         with open(temp_pdf_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
         # Extrair texto
         extracted_text = extract_text_from_pdf(temp_pdf_path)
 
-        # Simulação da conversão em DataFrame (ajuste conforme necessário)
+        # Criar um DataFrame simulando uma tabela estruturada
         data = {"Linha": extracted_text.split("\n")}
         df = pd.DataFrame(data)
 
+        # Criar o caminho do arquivo Excel
+        output_xlsx_path = os.path.join(ASSETS_DIR, "converted.xlsx")
+
         # Salvar DataFrame no Excel
-        output_xlsx_path = os.path.join("assets", "converted.xlsx")
         save_to_excel(df, output_xlsx_path)
 
         st.success("✅ Conversão concluída!")
