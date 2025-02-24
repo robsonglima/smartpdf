@@ -2,6 +2,8 @@ import streamlit as st
 import fitz  # PyMuPDF
 import pandas as pd
 import os
+import pytesseract
+from pdf2image import convert_from_path
 
 # Garantir que a pasta "assets/" existe para salvar arquivos temporários
 ASSETS_DIR = "assets"
@@ -15,31 +17,44 @@ st.title("📄 SmartPDF - Convert PDF to Excel")
 # Upload do arquivo PDF
 uploaded_file = st.file_uploader("Upload um arquivo PDF", type=["pdf"])
 
-# Função para extrair texto do PDF e melhorar a formatação
+# Função para verificar se o PDF tem texto extraível
 def extract_text_from_pdf(pdf_path):
     """
-    Extrai o texto do PDF e melhora a formatação removendo quebras desnecessárias.
+    Tenta extrair texto diretamente do PDF.
+    Se não conseguir, retorna uma string vazia.
     """
     doc = fitz.open(pdf_path)
     text = []
 
     for page in doc:
-        extracted_text = page.get_text("text")  # Extração padrão
-        cleaned_text = " ".join(extracted_text.split())  # Remove espaços e quebras extras
-        text.append(cleaned_text)
+        extracted_text = page.get_text("text")
+        if extracted_text.strip():
+            text.append(extracted_text.strip())
 
     return "\n".join(text)
 
-# Função para converter texto extraído em um DataFrame estruturado
+# Função para extrair texto de imagens (OCR)
+def extract_text_from_images(pdf_path):
+    """
+    Converte cada página do PDF em uma imagem e aplica OCR.
+    """
+    images = convert_from_path(pdf_path)
+    text = []
+
+    for img in images:
+        extracted_text = pytesseract.image_to_string(img, lang="por")  # Ajuste para idioma português
+        text.append(extracted_text.strip())
+
+    return "\n".join(text)
+
+# Função para converter texto em DataFrame estruturado
 def convert_text_to_dataframe(text):
     """
     Converte o texto extraído em um DataFrame mais organizado.
     """
     lines = text.split("\n")
     
-    # Criando colunas para organizar os dados
     data = {"Linha": [], "Conteúdo": []}
-
     for idx, line in enumerate(lines):
         if line.strip():  # Ignora linhas vazias
             data["Linha"].append(idx + 1)
@@ -61,8 +76,13 @@ if uploaded_file:
         with open(temp_pdf_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
-        # Extrair texto do PDF
+        # Tentar extrair texto diretamente do PDF
         extracted_text = extract_text_from_pdf(temp_pdf_path)
+
+        # Se o texto extraído estiver vazio, usar OCR
+        if not extracted_text.strip():
+            st.warning("🔍 O PDF pode ser um documento escaneado. Usando OCR para extrair o texto...")
+            extracted_text = extract_text_from_images(temp_pdf_path)
 
         # Converter para DataFrame estruturado
         df = convert_text_to_dataframe(extracted_text)
