@@ -1,39 +1,27 @@
 import streamlit as st
-import fitz  # PyMuPDF
-import pandas as pd
 import os
-
-st.set_page_config(page_title="SmartPDF - PDF to Excel", layout="centered")
+from backend.process_pdf import convert_pdf_to_excel
 
 st.title("📄 SmartPDF - Convert PDF to Excel")
 
-uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
+uploaded_file = st.file_uploader("Faça upload de um PDF", type=["pdf"])
 
 if uploaded_file:
-    with open("temp.pdf", "wb") as f:
+    # Salvar temporariamente o PDF
+    pdf_path = f"assets/{uploaded_file.name}"
+    with open(pdf_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
 
-    st.write("Extracting text from PDF...")
-    
-    # Extrair texto
-    def extract_text_from_pdf(pdf_path):
-        doc = fitz.open(pdf_path)
-        text = "\n".join([page.get_text("text") for page in doc])
-        return text
+    st.write("📄 Arquivo carregado com sucesso! Processando...")
 
-    text = extract_text_from_pdf("temp.pdf")
-    
-    st.write("Generating structured data...")
+    # Converter PDF para Excel
+    try:
+        excel_path = pdf_path.replace(".pdf", ".xlsx")
+        convert_pdf_to_excel(pdf_path, excel_path)
+        
+        # Exibir botão de download
+        st.success("✅ Conversão concluída!")
+        st.download_button("📥 Baixar Excel", open(excel_path, "rb"), file_name="converted.xlsx")
 
-    # Simulação da conversão em DataFrame
-    data = {"Column1": ["Value1", "Value2"], "Column2": ["Value3", "Value4"]}
-    df = pd.DataFrame(data)
-
-    # Exibir DataFrame
-    st.dataframe(df)
-
-    # Salvar em Excel
-    output_path = "converted.xlsx"
-    df.to_excel(output_path, index=False)
-
-    st.download_button("📥 Download Excel", open(output_path, "rb"), file_name="converted.xlsx")
+    except Exception as e:
+        st.error(f"Erro na conversão: {e}")
