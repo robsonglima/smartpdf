@@ -3,7 +3,7 @@ import fitz  # PyMuPDF
 import pandas as pd
 import os
 
-# Garantir que a pasta "assets/" existe
+# Garantir que a pasta "assets/" existe para salvar arquivos temporários
 ASSETS_DIR = "assets"
 os.makedirs(ASSETS_DIR, exist_ok=True)
 
@@ -15,11 +15,37 @@ st.title("📄 SmartPDF - Convert PDF to Excel")
 # Upload do arquivo PDF
 uploaded_file = st.file_uploader("Upload um arquivo PDF", type=["pdf"])
 
-# Função para extrair texto do PDF
+# Função para extrair texto do PDF e melhorar a formatação
 def extract_text_from_pdf(pdf_path):
+    """
+    Extrai o texto do PDF e melhora a formatação removendo quebras desnecessárias.
+    """
     doc = fitz.open(pdf_path)
-    text = "\n".join([page.get_text("text") for page in doc])
-    return text
+    text = []
+
+    for page in doc:
+        extracted_text = page.get_text("text")  # Extração padrão
+        cleaned_text = " ".join(extracted_text.split())  # Remove espaços e quebras extras
+        text.append(cleaned_text)
+
+    return "\n".join(text)
+
+# Função para converter texto extraído em um DataFrame estruturado
+def convert_text_to_dataframe(text):
+    """
+    Converte o texto extraído em um DataFrame mais organizado.
+    """
+    lines = text.split("\n")
+    
+    # Criando colunas para organizar os dados
+    data = {"Linha": [], "Conteúdo": []}
+
+    for idx, line in enumerate(lines):
+        if line.strip():  # Ignora linhas vazias
+            data["Linha"].append(idx + 1)
+            data["Conteúdo"].append(line)
+
+    return pd.DataFrame(data)
 
 # Função para salvar DataFrame como Excel
 def save_to_excel(df, output_path):
@@ -35,12 +61,11 @@ if uploaded_file:
         with open(temp_pdf_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
-        # Extrair texto
+        # Extrair texto do PDF
         extracted_text = extract_text_from_pdf(temp_pdf_path)
 
-        # Criar um DataFrame simulando uma tabela estruturada
-        data = {"Linha": extracted_text.split("\n")}
-        df = pd.DataFrame(data)
+        # Converter para DataFrame estruturado
+        df = convert_text_to_dataframe(extracted_text)
 
         # Criar o caminho do arquivo Excel
         output_xlsx_path = os.path.join(ASSETS_DIR, "converted.xlsx")
